@@ -13,6 +13,8 @@ namespace DragAndDropTestCase
 
         private readonly Collider2D[] _groundHitsCache = new Collider2D[3];
 
+        private const float MIN_DISTANCE_TO_NEAREST_POINT = 0.1f;
+
         private Rigidbody2D _rb;
 
         private bool _isDragged;
@@ -38,7 +40,6 @@ namespace DragAndDropTestCase
                 _isFindFloor = true;
                 MoveToNearestFloor();
             }
-
         }
 
         public void Drag(Vector2 position)
@@ -78,7 +79,7 @@ namespace DragAndDropTestCase
 
         private IEnumerator MoveToPointRoutine(Vector2 targetPosition)
         {
-            while (Vector2.Distance(_rb.position, targetPosition) > 0.1)
+            while (Vector2.Distance(_rb.position, targetPosition) > MIN_DISTANCE_TO_NEAREST_POINT)
             {
                 Vector2 newPosition = Vector2.MoveTowards(
                     _rb.position,

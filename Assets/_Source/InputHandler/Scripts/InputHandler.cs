@@ -89,7 +89,6 @@ namespace DragAndDropTestCase
 
         private void OnMovedToDirection(Vector2 moveDirection)
         {
-            //TODO: доделать перемещение камеры
             if (_currentDraggableObject != null)
                 return;
 
@@ -97,12 +96,6 @@ namespace DragAndDropTestCase
             float clampedX = Mathf.Clamp(targetPosition.x, _minX, _maxX);
 
             Camera.transform.position = new Vector3(clampedX, Camera.transform.position.y, Camera.transform.position.z);
-        }
-
-        private bool IsValidMove()
-        {
-
-            return false;
         }
     }
 }
