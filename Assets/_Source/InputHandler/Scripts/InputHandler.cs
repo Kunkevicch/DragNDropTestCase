@@ -9,8 +9,9 @@ namespace DragAndDropTestCase
         private readonly IInput _input;
         private readonly LayerMask _draggableLayer;
         private readonly SpriteRenderer _backGround;
+        private readonly Collider2D[] _cachedDraggableObject = new Collider2D[5];
 
-        private const float RAYCAST_DISTANCE = 1f;
+        private const float SPHERECAST_RADIUS = 0.025f;
 
         private IDraggable _currentDraggableObject;
 
@@ -28,6 +29,9 @@ namespace DragAndDropTestCase
 
         public void Initialize()
         {
+            // В иной ситуации я бы не менял фреймрейт тут, просто тестовое не настолько большое, чтобы создавать глобальную входную точку в проект.
+            // Лок фпс нужен для того, чтобы при 100+ фпс заряд батареи не опустошался со сверхсветовой скоростью
+            Application.targetFrameRate = 30;
             CalculateWorldBounds();
 
             Subscribe();
@@ -66,14 +70,40 @@ namespace DragAndDropTestCase
 
         private void OnClickDown(Vector2 clickDownPosition)
         {
-            var draggableObject = Physics2D.Raycast(clickDownPosition, Vector2.zero, RAYCAST_DISTANCE, _draggableLayer);
+            var draggableObjectsCount = Physics2D.OverlapCircleNonAlloc(clickDownPosition, SPHERECAST_RADIUS, _cachedDraggableObject, _draggableLayer);
 
-            if (draggableObject)
+            if (draggableObjectsCount == 0)
+                return;
+
+            float minYDelta = float.PositiveInfinity;
+            IDraggable nearestDraggableObject = null;
+
+            foreach (var draggableObjectCollider in _cachedDraggableObject)
             {
-                if (draggableObject.collider.TryGetComponent(out IDraggable draggable))
+                if (draggableObjectCollider == null)
+                    continue;
+
+                if (draggableObjectCollider.TryGetComponent(out IDraggable draggable))
                 {
-                    _currentDraggableObject = draggable;
+                    float yDelta = Mathf.Abs(draggableObjectCollider.transform.position.y - clickDownPosition.y);
+                    if (yDelta < minYDelta)
+                    {
+                        minYDelta = yDelta;
+                        nearestDraggableObject = draggable;
+                    }
+
                 }
+            }
+
+            if (nearestDraggableObject != null)
+            {
+                _currentDraggableObject = nearestDraggableObject;
+                _currentDraggableObject.StartDrag(clickDownPosition);
+            }
+
+            for (int i = 0; i < _cachedDraggableObject.Length; i++)
+            {
+                _cachedDraggableObject[i] = null;
             }
         }
 

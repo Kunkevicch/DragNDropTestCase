@@ -11,6 +11,7 @@ namespace DragAndDropTestCase
         , IBeginDragHandler
         , IDragHandler
         , IEndDragHandler
+        , IPointerUpHandler
         , IPointerMoveHandler
     {
 
@@ -39,17 +40,21 @@ namespace DragAndDropTestCase
         {
             _isDragging = false;
             _startDragPosition = Vector2.zero;
-            OnClickUp?.Invoke(GetWorldPositionByClickPosition(eventData.position));
         }
 
-        private Vector2 GetWorldPositionByClickPosition(Vector3 clickPosition)
-        => Camera.main.ScreenToWorldPoint(clickPosition);
-
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            OnClickUp?.Invoke(GetWorldPositionByClickPosition(eventData.position));
+        }
         public void OnPointerMove(PointerEventData eventData)
         {
             if (!_isDragging)
                 return;
             OnMovedToDirection?.Invoke((eventData.position - _startDragPosition).normalized);
         }
+
+        private Vector2 GetWorldPositionByClickPosition(Vector3 clickPosition)
+        => Camera.main.ScreenToWorldPoint(clickPosition);
+
     }
 }

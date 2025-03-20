@@ -11,11 +11,15 @@ namespace DragAndDropTestCase
         [SerializeField] private float _moveSpeed;
         [SerializeField] private LayerMask _groundLayer;
 
+        private Rigidbody2D _rb;
+        private Coroutine _changeScaleCoroutine;
+        private Vector3 _baseScale;
+
         private readonly Collider2D[] _groundHitsCache = new Collider2D[3];
 
         private const float MIN_DISTANCE_TO_NEAREST_POINT = 0.1f;
-
-        private Rigidbody2D _rb;
+        private const float TIME_TO_CHANGE_SCALE = 0.2f;
+        private const float SCALE_UP_MODIFIER = 0.03f;
 
         private bool _isDragged;
         private bool _isLocked;
@@ -23,6 +27,7 @@ namespace DragAndDropTestCase
 
         private void Awake()
         {
+            _baseScale = transform.localScale;
             _rb = GetComponent<Rigidbody2D>();
         }
 
@@ -42,15 +47,22 @@ namespace DragAndDropTestCase
             }
         }
 
-        public void Drag(Vector2 position)
+        public void StartDrag(Vector2 startedDragPosition)
         {
             _isDragged = true;
+            StartChangeScale(true);
+            _rb.MovePosition(startedDragPosition);
+        }
+
+        public void Drag(Vector2 position)
+        {
             _rb.MovePosition(position);
         }
 
         public void Drop()
         {
             _isDragged = false;
+            StartChangeScale(false);
         }
 
         public void LockPosition()
@@ -97,9 +109,37 @@ namespace DragAndDropTestCase
         }
 
         private Vector2 FindEdgePoint(Vector2 origin, Vector2 direction, float maxDistance, LayerMask layerMask)
+        => Physics2D.Raycast(origin, direction, maxDistance, layerMask).point;
+
+        private void StartChangeScale(bool isScaleUp)
         {
-            RaycastHit2D hit = Physics2D.Raycast(origin, direction, maxDistance, layerMask);
-            return hit.point;
+            if (_changeScaleCoroutine != null)
+            {
+                StopCoroutine(_changeScaleCoroutine);
+                _changeScaleCoroutine = null;
+            }
+
+            _changeScaleCoroutine = StartCoroutine(ChangeScaleRoutine(isScaleUp));
+        }
+
+        private IEnumerator ChangeScaleRoutine(bool isScaleUp)
+        {
+            Vector3 startScale = transform.localScale;
+            Vector3 targetScale = isScaleUp ?
+                _baseScale + Vector3.one * SCALE_UP_MODIFIER :
+                _baseScale;
+
+            float elapsedTime = 0f;
+
+            while (elapsedTime < TIME_TO_CHANGE_SCALE)
+            {
+                float progress = elapsedTime / TIME_TO_CHANGE_SCALE;
+                transform.localScale = Vector3.Lerp(startScale, targetScale, progress);
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+            transform.localScale = targetScale;
+            _changeScaleCoroutine = null;
         }
     }
 }

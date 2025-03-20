@@ -4,7 +4,8 @@ namespace DragAndDropTestCase
 {
     public interface IDraggable
     {
-        void Drag(Vector2 direction);
-        void Drop();
+        public void StartDrag(Vector2 direction);
+        public void Drag(Vector2 direction);
+        public void Drop();
     }
 }
